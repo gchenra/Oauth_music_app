@@ -31,7 +31,7 @@ def getYoutubeAuthCode() -> HttpResponse:
     return redirect(auth_url)
 
 
-def getYoutubeTokens(auth_code: str, user_id: int) -> None:
+def getYoutubeTokens(auth_code: str, user_email: str) -> None:
     try:
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
             'Oauth2/google_client_secret.json',
@@ -41,7 +41,7 @@ def getYoutubeTokens(auth_code: str, user_id: int) -> None:
         flow.fetch_token(code=auth_code)
         credentials = flow.credentials
         models.YoutubeAuth.objects.create(
-            user_id=user_id,
+            user_email=user_email,
             access_token=credentials.token,
             refresh_token=credentials.refresh_token,
             token_uri=credentials.token_uri
@@ -50,9 +50,9 @@ def getYoutubeTokens(auth_code: str, user_id: int) -> None:
         raise Exception(e)
 
 
-def searchYoutube(userid: int, artists: List[str], genres: List[str]) -> List:
+def searchYoutube(user_email: str, artists: List[str], genres: List[str]) -> List:
     try:
-        cur_user = models.YoutubeAuth.objects.get(user_id=userid)
+        cur_user = models.YoutubeAuth.objects.get(user_email=user_email)
     except ObjectDoesNotExist as e:
         logger.error("This user has not authorize our app access to YouTube.")
         print("*********************************************************************************")

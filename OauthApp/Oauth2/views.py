@@ -7,17 +7,17 @@ import logging
 from . import models
 
 logger = logging.getLogger(__name__)
-cur_spotify_user = 0
-cur_youtube_user = 0
+cur_spotify_user = ""
+cur_youtube_user = ""
 
 
 def spotifyAuth(request: HttpRequest) -> HttpResponse:
     # check oauth tokens in DB
     global cur_spotify_user
-    cur_spotify_user = request.GET.get('userid', default=None)
+    cur_spotify_user = request.GET.get('user_email', default=None)
     try:
         if cur_spotify_user:
-            models.SpotifyAuth.objects.get(user_id=cur_spotify_user)
+            models.SpotifyAuth.objects.get(user_email=cur_spotify_user)
             return HttpResponse("You've already authorized us access to Spotify")
         else:
             return HttpResponse("No user identity specified in the request", status=400)
@@ -46,10 +46,10 @@ def spotifyCallback(request: HttpRequest) -> HttpResponse:
 
 def youtubeAuth(request:HttpRequest) -> HttpResponse:
     global cur_youtube_user
-    cur_youtube_user = request.GET.get('userid', default=None)
+    cur_youtube_user = request.GET.get('user_email', default=None)
     try:
         if cur_youtube_user:
-            models.YoutubeAuth.objects.get(user_id=cur_youtube_user)
+            models.YoutubeAuth.objects.get(user_email=cur_youtube_user)
             return HttpResponse("You've already authorized us access to YouTube")
         else:
             return HttpResponse("No user identity specified in the request", status=400)
@@ -76,7 +76,7 @@ def youtubeCallback(request: HttpRequest) -> HttpResponse:
 
 
 def getRecs(request: HttpRequest) -> HttpResponse:
-    cur_user = request.GET.get('userid', default=None)
+    cur_user = request.GET.get('user_email', default=None)
     if not cur_user:
         return HttpResponse("No user identity specified in the request", status=400)
     data = recommend_gen.getRecommends(cur_user)

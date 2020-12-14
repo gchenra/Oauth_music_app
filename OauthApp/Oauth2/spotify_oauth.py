@@ -29,7 +29,7 @@ def getSpotifyAuthCode() -> HttpResponse:
     return redirect(request_url)
 
 
-def getSpotifyTokens(auth_code: str, userid: int) -> None:
+def getSpotifyTokens(auth_code: str, user_email: str) -> None:
     """
     :param auth_code:
     :return: None
@@ -55,7 +55,7 @@ def getSpotifyTokens(auth_code: str, userid: int) -> None:
     refresh_token = json_resp.get('refresh_token', "")
     if access_token and refresh_token:
         models.SpotifyAuth.objects.create(
-            user_id=userid,
+            user_email=user_email,
             access_token=access_token,
             refresh_token=refresh_token
         )
@@ -64,10 +64,10 @@ def getSpotifyTokens(auth_code: str, userid: int) -> None:
         raise Exception("response when requesting spotify tokens is not right")
 
 
-def getNewTokens(userid: int) -> str:
+def getNewTokens(user_email: str) -> str:
     """Return the new access token"""
     # make request to the api/token with refresh code ...
-    cur_tokens = models.SpotifyAuth.objects.get(user_id=userid)
+    cur_tokens = models.SpotifyAuth.objects.get(user_email=user_email)
     request_params = {
         'grant_type': 'refresh_token',
         'refresh_token': cur_tokens.refresh_token
@@ -81,7 +81,6 @@ def getNewTokens(userid: int) -> str:
         data=request_params
     )
     json_resp = resp.json()
-    print(json_resp)
     access_token = json_resp.get('access_token', "")
     if access_token:
         cur_tokens.access_token = access_token
@@ -96,9 +95,9 @@ def getNewTokens(userid: int) -> str:
     return access_token
 
 
-def getTopTracks(userid: int) -> dict:
+def getTopTracks(user_email: str) -> dict:
     try:
-        user_tokens = models.SpotifyAuth.objects.get(user_id=userid)
+        user_tokens = models.SpotifyAuth.objects.get(user_email=user_email)
     except ObjectDoesNotExist as e:
         logger.error("This user has not authorize our app access to spotify")
         print("*********************************************************************************")
@@ -119,7 +118,7 @@ def getTopTracks(userid: int) -> dict:
     )
 
     if resp.status_code == 401:
-        new_access_token = getNewTokens(userid)
+        new_access_token = getNewTokens(user_email)
         resp = requests.get(
             track_url,
             headers={
@@ -137,9 +136,9 @@ def getTopTracks(userid: int) -> dict:
     return resp.json()
 
 
-def getFollowingArtists(userid: int) -> dict:
+def getFollowingArtists(user_email: str) -> dict:
     try:
-        user_tokens = models.SpotifyAuth.objects.get(user_id=userid)
+        user_tokens = models.SpotifyAuth.objects.get(user_email=user_email)
     except ObjectDoesNotExist as e:
         logger.error("This user has not authorize our app access to spotify")
         print("*********************************************************************************")
@@ -161,7 +160,7 @@ def getFollowingArtists(userid: int) -> dict:
     )
 
     if resp.status_code == 401:
-        new_access_token = getNewTokens(userid)
+        new_access_token = getNewTokens(user_email)
         resp = requests.get(
             track_url,
             headers={
@@ -178,21 +177,21 @@ def getFollowingArtists(userid: int) -> dict:
 
     return resp.json()
 
-
-def getPlaylist(userid: int) -> dict:
+"""
+def getPlaylist(user_email: str) -> dict:
     try:
-        user_tokens = models.SpotifyAuth.objects.get(user_id=userid)
+        user_tokens = models.SpotifyAuth.objects.get(user_email=user_email)
     except ObjectDoesNotExist as e:
         logger.error("This user has not authorize our app access to spotify")
         print("*********************************************************************************")
         print("*********************************************************************************")
         print("*********************************************************************************")
         print(f"Error when getting spotify top artists: {e}")
+"""
 
-
-def getSpotifyRecs(userid, track_seeds, artist_seeds, genre_seeds):
+def getSpotifyRecs(user_email, track_seeds, artist_seeds, genre_seeds):
     try:
-        user_tokens = models.SpotifyAuth.objects.get(user_id=userid)
+        user_tokens = models.SpotifyAuth.objects.get(user_email=user_email)
     except ObjectDoesNotExist as e:
         logger.error("This user has not authorize our app access to spotify")
         print("*********************************************************************************")
@@ -216,7 +215,7 @@ def getSpotifyRecs(userid, track_seeds, artist_seeds, genre_seeds):
     )
 
     if resp.status_code == 401:
-        new_access_token = getNewTokens(userid)
+        new_access_token = getNewTokens(user_email)
         resp = requests.get(
             rec_url,
             headers={

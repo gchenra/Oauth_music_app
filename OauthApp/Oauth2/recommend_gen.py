@@ -5,15 +5,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def getRecommends(userid: int) -> dict:
+def getRecommends(user_email: int) -> dict:
     # returns a dictionary of top tracks
     result = {'items': []}
-    spotify_tracks = spotify_oauth.getTopTracks(userid)
-    spotify_artists = spotify_oauth.getFollowingArtists(userid)
+    spotify_tracks = spotify_oauth.getTopTracks(user_email)
+    spotify_artists = spotify_oauth.getFollowingArtists(user_email)
     top_tracks, top_artist, artist_names, top_genres = getSpotifyPrefIDs(spotify_tracks, spotify_artists["artists"])
-    spotify_recs = spotify_oauth.getSpotifyRecs(userid, top_tracks, top_artist, top_genres)
+    spotify_recs = spotify_oauth.getSpotifyRecs(user_email, top_tracks, top_artist, top_genres)
     spotify_result = parseSpotifyResult(spotify_recs)
-    youtube_result = youtube_oauth.searchYoutube(userid, artist_names, top_genres)
+    youtube_result = youtube_oauth.searchYoutube(user_email, artist_names, top_genres)
     result['items'] += youtube_result + spotify_result
 
     return result
